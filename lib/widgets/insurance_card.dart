@@ -8,12 +8,16 @@ class InsuranceCard extends StatelessWidget {
     required this.width,
     required this.height,
     this.onTap,
+    required this.assetId,
+    required this.carName,
   });
 
   final double textScale;
   final double width;
   final double height;
   final Function()? onTap;
+  final String assetId;
+  final String carName;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +45,7 @@ class InsuranceCard extends StatelessWidget {
                   8,
                 ),
                 child: Text(
-                  "Land Cruiser\nwill be\nprotected",
+                  "${carName}\nwill be\nprotected",
                   style: TextStyle(
                     fontSize: textScale * 32,
                     color: Colors.white,
@@ -75,7 +79,7 @@ class InsuranceCard extends StatelessWidget {
                   child: Hero(
                     tag: "car",
                     child: Image.asset(
-                      "assets/landcruiser.png",
+                      "assets/${assetId}.png",
                       fit: BoxFit.fitHeight,
                       height: height * 0.25,
                     ),

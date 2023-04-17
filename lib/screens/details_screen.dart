@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:insuretech_ja_assure/constants.dart';
+import 'package:insuretech_ja_assure/screens/upload_file_screen.dart';
 import 'package:insuretech_ja_assure/widgets/buttons.dart';
+import 'package:page_transition/page_transition.dart';
 
 class DetailsScreen extends StatefulWidget {
   const DetailsScreen({Key? key}) : super(key: key);
@@ -124,7 +126,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           width: width,
                           textScale: textScale,
                           text: "Claim Insurance",
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              PageTransition(
+                                child: UploadFile(
+                                  type: "bb",
+                                  title: "Let's get started",
+                                  typeOfDocument: "bifurcated bill",
+                                ),
+                                type: PageTransitionType.fade,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
