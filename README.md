@@ -1,4 +1,4 @@
-# insuretech_ja_assure
+# InsureTech JA Assure
 
 A new Flutter project.
 
