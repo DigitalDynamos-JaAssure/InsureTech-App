@@ -20,12 +20,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'InsureTech',
       theme: ThemeData(
         useMaterial3: true,
         textTheme: GoogleFonts.nunitoTextTheme(),
         primarySwatch: kPrimaryMaterialColor,
       ),
+      routes: {
+        '/homePage': (buildContext) => HomeScreen(),
+      },
       home: HomeScreen(),
     );
   }

@@ -1,47 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:insuretech_ja_assure/data/policies_data.dart';
+import 'package:insuretech_ja_assure/screens/details_screen.dart';
+import 'package:insuretech_ja_assure/services/api_calls.dart';
+import 'package:insuretech_ja_assure/services/media_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:page_transition/page_transition.dart';
 
 class UnderProcessPage extends StatefulWidget {
-  const UnderProcessPage({super.key});
+  final String? pid;
+  const UnderProcessPage({super.key, this.pid});
 
   @override
   State<UnderProcessPage> createState() => _UnderProcessPageState();
 }
 
 class _UnderProcessPageState extends State<UnderProcessPage> {
-  // var _myBox = Hive.box("hoursBox");
+  var _myBox = Hive.box("myBox");
   var response;
-  // callApi() async {
-  //   var uid = await _myBox.get(kUid);
-  //   while (true) {
-  //     print("ds");
-  //     await Future.delayed(Duration(seconds: 5));
-  //     try {
-  //       response = await MediaService().get('/user/${uid}');
-  //     } catch (e) {
-  //       print(e);
-  //     }
-  //     print((response)[0]);
-  //     if (response.runtimeType == List && (response)[0]["idVerified"] == true) {
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (builder) => HomePage(
-  //             response: response[0],
-  //           ),
-  //         ),
-  //       );
-  //       break;
-  //     }
-  //   }
-  // }
+  callApi() async {
+    var uid = await _myBox.get(widget.pid.toString() + "claimid");
+    print(uid);
+    while (true) {
+      print("SLKDFJasdfasdfasd");
+      await Future.delayed(Duration(seconds: 5));
+      try {
+        response = await MediaService().get('/claim/getAcceptedClaim/${uid}');
+        print("YE");
+      } catch (e) {
+        print("SDJFHLJSKDF");
+        print(e);
+      }
+      print((response));
+      if (!((response as Map).keys.contains("message"))) {
+        _myBox.put(widget.pid, "processed");
+        _myBox.put(widget.pid! + "details", response);
+        PolicyDetails res = await APICalls(context).getAllPolicies();
+        for (Policies i in res.policies!) {
+          if (i.sId == widget.pid) {
+            Navigator.pushReplacement(
+              context,
+              PageTransition(
+                child: DetailsScreen(
+                  policies: i,
+                ),
+                type: PageTransitionType.fade,
+              ),
+            );
+            break;
+          }
+        }
+        break;
+      }
+    }
+  }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    if (widget.pid != null) {
+      callApi();
+    }
     // callApi();
   }
 

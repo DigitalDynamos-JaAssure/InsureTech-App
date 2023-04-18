@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -11,6 +12,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:insuretech_ja_assure/constants.dart';
 import 'package:insuretech_ja_assure/screens/loading_screen.dart';
 import 'package:insuretech_ja_assure/screens/risk_screen.dart';
+import 'package:insuretech_ja_assure/screens/show_car_damage_screen.dart';
 import 'package:insuretech_ja_assure/screens/verification_screen.dart';
 import 'package:insuretech_ja_assure/widgets/show_snack_bar.dart';
 import 'package:mime_type/mime_type.dart';
@@ -91,10 +93,8 @@ class _UploadFileState extends State<UploadFile> {
                                 await FilePicker.platform.pickFiles();
 
                             if (result != null) {
-                              if (result.files.single.extension != 'pdf') {
-                                file = File(result.files.single.path!);
-                                setState(() {});
-                              }
+                              file = File(result.files.single.path!);
+                              setState(() {});
                             } else {
                               showSnackBar(
                                 context,
@@ -171,16 +171,36 @@ class _UploadFileState extends State<UploadFile> {
                               );
 
                               setState(() {
-                                loading = true;
+                                loading = false;
                               });
                               return;
                             }
-
-                            if (type == 'bb') {
+                            if (type == 'cc') {
+                              await Future.delayed(
+                                Duration(
+                                  seconds: 6,
+                                ),
+                              );
                               Navigator.push(
                                 context,
                                 PageTransition(
-                                  child: UnderProcessPage(),
+                                  child: ShowCarDamageScreen(),
+                                  type: PageTransitionType.fade,
+                                ),
+                              );
+                            } else if (type == 'bb') {
+                              final bytes = await file!.readAsBytes();
+
+                              String file64 = base64Encode(bytes);
+                              await _myBox.put("bbpdf", file64);
+                              Navigator.push(
+                                context,
+                                PageTransition(
+                                  child: UploadFile(
+                                    type: 'cc',
+                                    title: 'Damaged Car Picture Upload',
+                                    typeOfDocument: 'damaged car picture',
+                                  ),
                                   type: PageTransitionType.fade,
                                 ),
                               );
@@ -285,6 +305,11 @@ class _UploadFileState extends State<UploadFile> {
                                 ),
                               );
                             } else if (type == 'car') {
+                              final bytes = await file!.readAsBytes();
+                              String base64Image = "data:image/png;base64," +
+                                  base64Encode(bytes);
+                              Map<String, dynamic> data = {"car": base64Image};
+                              await _myBox.put("car", data);
                               Navigator.push(
                                 context,
                                 PageTransition(
@@ -297,6 +322,16 @@ class _UploadFileState extends State<UploadFile> {
                                 ),
                               );
                             } else if (type == "cbill") {
+                              final bytes = await file!.readAsBytes();
+                              String base64Image = "data:image/png;base64," +
+                                  base64Encode(bytes);
+                              Map<String, dynamic> data = {"car": base64Image};
+                              await _myBox.put("cbill", data);
+                              await Future.delayed(
+                                Duration(
+                                  seconds: 3,
+                                ),
+                              );
                               Navigator.push(
                                 context,
                                 PageTransition(

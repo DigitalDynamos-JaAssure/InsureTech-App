@@ -3,10 +3,15 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:insuretech_ja_assure/constants.dart';
+import 'package:insuretech_ja_assure/data/policies_data.dart';
 import 'package:insuretech_ja_assure/screens/details_screen.dart';
+import 'package:insuretech_ja_assure/screens/show_pipe_damage.dart';
 import 'package:insuretech_ja_assure/screens/upload_file_screen.dart';
+import 'package:insuretech_ja_assure/services/api_calls.dart';
 import 'package:insuretech_ja_assure/widgets/insurance_card.dart';
+import 'package:insuretech_ja_assure/widgets/show_snack_bar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,6 +21,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late Future<PolicyDetails> details;
+  int idx = 0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    details = APICalls(context).getAllPolicies();
+  }
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -92,154 +106,180 @@ class _HomeScreenState extends State<HomeScreen> {
           Icons.history,
           Icons.account_circle_outlined,
         ],
-        activeIndex: 0,
-        onTap: (int) {},
+        activeIndex: idx,
+        onTap: (int) {
+          idx = int;
+          setState(() {});
+        },
       ),
-      body: SizedBox(
-        height: height - appBar.preferredSize.height,
-        width: width,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CarouselSlider(
-                items: [
-                  InsuranceCard(
-                    carName: "i10",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (builder) => DetailsScreen(),
-                        ),
-                      );
-                    },
-                    textScale: textScale,
+      body: (idx == 1)
+          ? ShowPipeDamage()
+          : FutureBuilder(
+              future: details,
+              builder: (builder, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.data != null) {
+                  PolicyDetails details = snapshot.data!;
+                  print(details.policies);
+                  return SizedBox(
+                    height: height - appBar.preferredSize.height,
                     width: width,
-                    height: height,
-                    assetId: "i10",
-                  ),
-                  InsuranceCard(
-                    carName: "Kia Seltos",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (builder) => DetailsScreen(),
-                        ),
-                      );
-                    },
-                    textScale: textScale,
-                    width: width,
-                    height: height,
-                    assetId: "kiaseltos",
-                  ),
-                ],
-                options: CarouselOptions(
-                  enlargeStrategy: CenterPageEnlargeStrategy.zoom,
-                  enableInfiniteScroll: true,
-                  autoPlay: true,
-                  pauseAutoPlayOnTouch: true,
-                  pauseAutoPlayOnManualNavigate: true,
-                  enlargeCenterPage: true,
-                  height: height * 0.55,
-                  viewportFraction: 1.1,
-                  pageViewKey: const PageStorageKey<String>('carousel_slider'),
-                ),
-              ),
-              Text(
-                "Swipe to view your policies",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              ...(true)
-                  ? [
-                      Text(
-                        "No more policies to be shown",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: textScale * 20,
-                          color: Colors.grey,
-                        ),
-                      )
-                    ]
-                  : List.generate(
-                      1,
-                      (index) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 4,
-                        ),
-                        child: Container(
-                          height: height * 0.12,
-                          width: width,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              16,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          CarouselSlider.builder(
+                            options: CarouselOptions(
+                              enlargeStrategy: CenterPageEnlargeStrategy.zoom,
+                              enableInfiniteScroll: true,
+                              autoPlay: true,
+                              pauseAutoPlayOnTouch: true,
+                              pauseAutoPlayOnManualNavigate: true,
+                              enlargeCenterPage: true,
+                              height: height * 0.55,
+                              viewportFraction: 1.1,
+                              pageViewKey: const PageStorageKey<String>(
+                                  'carousel_slider'),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 8,
-                                color: kPrimaryMaterialColor.shade100,
-                                offset: const Offset(
-                                  3,
-                                  3,
-                                ),
-                              ),
-                            ],
+                            itemCount: details.policies!.length,
+                            itemBuilder: (BuildContext context, int index,
+                                int realIndex) {
+                              return InsuranceCard(
+                                carName: details
+                                    .policies![index].carDetails!.model
+                                    .toString()
+                                    .split(" ")[0],
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (builder) => DetailsScreen(
+                                        policies: details.policies![index],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                textScale: textScale,
+                                width: width,
+                                height: height,
+                                assetId: (details
+                                            .policies![index].carDetails!.model
+                                            .toString()
+                                            .split(" ")[0]
+                                            .toLowerCase() ==
+                                        'i10')
+                                    ? "i10"
+                                    : "kiaseltos",
+                              );
+                            },
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Land Cruiser",
-                                      style: TextStyle(
-                                        fontSize: textScale * 24,
-                                        fontWeight: FontWeight.w600,
+                          Text(
+                            "Swipe to view your policies",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          ...(details.policies!.length <= 3)
+                              ? [
+                                  Text(
+                                    "No more policies to be shown",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: textScale * 20,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                ]
+                              : List.generate(
+                                  details.policies!.length - 3,
+                                  (index) => Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: 4,
+                                    ),
+                                    child: Container(
+                                      height: height * 0.12,
+                                      width: width,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                          16,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            blurRadius: 8,
+                                            color:
+                                                kPrimaryMaterialColor.shade100,
+                                            offset: const Offset(
+                                              3,
+                                              3,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    Text(
-                                      "Insured",
-                                      style: TextStyle(
-                                        color: Colors.green.shade700,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 16.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  details.policies![index + 3]
+                                                      .carDetails!.model
+                                                      .toString(),
+                                                  style: TextStyle(
+                                                    fontSize: textScale * 24,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "Insured",
+                                                  style: TextStyle(
+                                                    color:
+                                                        Colors.green.shade700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            ClipRect(
+                                              child: Container(
+                                                transform:
+                                                    Matrix4.translationValues(
+                                                  50,
+                                                  0,
+                                                  0,
+                                                ),
+                                                child: Image.asset(
+                                                  "assets/landcruiser.png",
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                ClipRect(
-                                  child: Container(
-                                    transform: Matrix4.translationValues(
-                                      50,
-                                      0,
-                                      0,
-                                    ),
-                                    child: Image.asset(
-                                      "assets/landcruiser.png",
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
-            ],
-          ),
-        ),
-      ),
+                  );
+                }
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }),
     );
   }
 }

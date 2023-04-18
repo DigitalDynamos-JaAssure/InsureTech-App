@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:insuretech_ja_assure/constants.dart';
+import 'package:insuretech_ja_assure/screens/home_screen.dart';
 import 'package:insuretech_ja_assure/screens/loading_screen.dart';
 import 'package:insuretech_ja_assure/services/api_calls.dart';
 import 'package:insuretech_ja_assure/widgets/buttons.dart';
+import 'package:insuretech_ja_assure/widgets/show_snack_bar.dart';
+import 'package:page_transition/page_transition.dart';
 
 class CoverageScreen extends StatefulWidget {
   final double riskFactor;
@@ -15,6 +19,7 @@ class CoverageScreen extends StatefulWidget {
 }
 
 class _CoverageScreenState extends State<CoverageScreen> {
+  final _myBox = Hive.box("myBox");
   bool loading = false;
   @override
   Widget build(BuildContext context) {
@@ -141,9 +146,47 @@ class _CoverageScreenState extends State<CoverageScreen> {
                           textScale: textScale,
                           text: "Confirm Purchase",
                           onTap: () async {
+                            setState(() {
+                              loading = true;
+                            });
                             APICalls apiCalls = APICalls(context);
-                            Map<String, dynamic> data = {};
-                            var response = await apiCalls.createPolicy(data);
+                            Map<String, dynamic> frc = await _myBox.get("frc");
+                            Map<String, dynamic> brc = await _myBox.get("brc");
+                            Map<String, dynamic> car = await _myBox.get("car");
+                            Map<String, dynamic> data = {
+                              "riskFactor": 0.5,
+                              "policyType": "Car",
+                              "carDetails": {
+                                "carImg": car["car"],
+                                "Engine_No": frc["Engion_No"],
+                                "Color": brc["Color"],
+                                "model": brc["model"],
+                                "year": frc["year"],
+                                "chesis_no": frc["chesis_no"],
+                                "coverage": value
+                              }
+                            };
+                            try {
+                              await apiCalls.createPolicy(data);
+
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                PageTransition(
+                                  child: HomeScreen(),
+                                  type: PageTransitionType.fade,
+                                ),
+                                (route) => false,
+                              );
+                            } catch (e) {
+                              showSnackBar(
+                                context,
+                                "Some error occured!",
+                                Colors.red,
+                              );
+                            }
+                            setState(() {
+                              loading = false;
+                            });
                           },
                         ),
                       ),
